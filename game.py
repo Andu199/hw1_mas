@@ -18,7 +18,7 @@ START_STATES = None  # to be completed
 ACTIONS_NO = 8
 STATES_NO = 70  # 7 * 10 grid
 
-NO_EPISODES = 10000
+NO_EPISODES = 2000
 MULTIAGENT = False
 
 
