@@ -54,7 +54,7 @@ class QLearningAgent(BasicAgent):
     def __init__(self, epsilon, alpha, actions_no, states_no):
         super().__init__(epsilon, alpha, actions_no, states_no)
 
-        self.q = np.array((states_no, actions_no))
+        self.q = np.zeros((states_no, actions_no))
         self.current_state = None
         self.current_action = None
 
@@ -72,7 +72,7 @@ class SarsaAgent(BasicAgent):
     def __init__(self, epsilon, alpha, actions_no, states_no):
         super().__init__(epsilon, alpha, actions_no, states_no)
 
-        self.q = np.array((states_no, actions_no))
+        self.q = np.zeros((states_no, actions_no))
         self.current_state = None
         self.current_action = None
 
