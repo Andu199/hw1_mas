@@ -94,4 +94,27 @@ class SarsaAgent(BasicAgent):
 
 
 class DoubleQLearningAgent(BasicAgent):
-    pass
+    def __init__(self, epsilon, alpha, actions_no, states_no):
+        super().__init__(epsilon, alpha, actions_no, states_no)
+
+        self.q1 = np.array((states_no, actions_no))
+        self.q2 = np.array((states_no, actions_no))
+
+        self.current_state = None
+        self.current_action = None
+
+    def get_action(self, state):
+        self.current_state = state
+        self.current_action = epsilon_greedy(state, self.q1 + self.q2, self.epsilon)
+        return self.current_action
+
+    def update_internals(self, next_state, reward):
+        prob = random.random()
+        if prob < 0.5:
+            best_a = self.q2[next_state].argmax()
+            self.q1[self.current_state, self.current_action] += \
+                self.alpha * (reward + self.q1[next_state, best_a] - self.q1[self.current_state, self.current_action])
+        else:
+            best_a = self.q1[next_state].argmax()
+            self.q2[self.current_state, self.current_action] += \
+                self.alpha * (reward + self.q2[next_state, best_a] - self.q2[self.current_state, self.current_action])
