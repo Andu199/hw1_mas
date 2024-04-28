@@ -56,6 +56,7 @@ class BaseEnv:
     def state_tuple_to_int(state):
         y, x = state
         return y * BaseEnv.WIDTH + x
+
     @staticmethod
     def state_int_to_tuple(state):
         y = state // BaseEnv.WIDTH
