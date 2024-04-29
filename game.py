@@ -11,7 +11,7 @@ from agents import QLearningAgent, SarsaAgent, DoubleQLearningAgent
 from envs import GridA, GridB
 
 # Constants
-GRID_WORLD = "grid_a"  # 'grid_a' / 'grid_b'
+GRID_WORLD = "grid_b"  # 'grid_a' / 'grid_b'
 AGENT = "qlearning"  # 'qlearning' / 'sarsa' / 'double_qlearning'
 
 EPSILON = 0.1
@@ -25,8 +25,8 @@ START_STATES = None  # to be completed
 ACTIONS_NO = 4
 STATES_NO = 70  # 7 * 10 grid
 
-NO_EPISODES = 10000
-MULTIAGENT = True
+NO_EPISODES = 2000
+MULTIAGENT = False
 
 
 def get_agent(epsilon, alpha, actions_no=ACTIONS_NO):
@@ -55,12 +55,10 @@ def get_env(start_state):
         if GRID_WORLD == "grid_a":
             return GridA(1, [start_state])
         elif GRID_WORLD == "grid_b":
-            return GridB(start_state)
+            return GridB(1, [start_state])
     else:
         if GRID_WORLD == "grid_a":
             return GridA(3, [(0, 2), (3, 0), (6, 2)])
-        elif GRID_WORLD == "grid_b":
-            return GridB(start_state)
 
 
 def print_q(q):
@@ -123,9 +121,21 @@ def log_results(results, key_name, task_id):
         json.dump(logged_results, f, indent=6)
 
 
+def get_policy(agent):
+    if hasattr(agent, "q"):
+        pi = np.argmax(agent.q, axis=1)
+    else:
+        pi = np.argmax(agent.q1 + agent.q2, axis=1)
+
+    return pi
+
+
 def main_single_agent_run(agent, env):
     total_rewards = []
     total_steps = []
+
+    old_pi = np.zeros(STATES_NO)
+    converged_episode = -1
 
     for episode in range(NO_EPISODES):
         print("EPISODE", episode)
@@ -150,7 +160,12 @@ def main_single_agent_run(agent, env):
         total_rewards.append(total_reward)
         total_steps.append(steps)
 
-    return total_rewards, total_steps
+        pi = get_policy(agent)
+        if all(pi == old_pi) and converged_episode == -1:
+            converged_episode = episode
+        old_pi = pi
+
+    return total_rewards, total_steps, converged_episode
 
 
 def main_multi_agent_run(agents, env):
@@ -192,16 +207,20 @@ def main_multi_agent_run(agents, env):
 
 
 def task1():
+    if MULTIAGENT:
+        raise ValueError("ERROR!!!")
+
     results = {}
     for epsilon in EPSILON_VALUES:
         agent = get_agent(epsilon, ALPHA)
         env = get_env(START_STATE)
-        total_rewards, total_steps = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
 
         results[epsilon] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
+            "conv_episode": converged_episode,
         }
 
     log_results(results, "epsilon", "task1")
@@ -210,12 +229,13 @@ def task1():
     for alpha in ALPHA_VALUES:
         agent = get_agent(EPSILON, alpha)
         env = get_env(START_STATE)
-        total_rewards, total_steps = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
 
         results[alpha] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
+            "conv_episode": converged_episode,
         }
 
     log_results(results, "alpha", "task1")
@@ -224,23 +244,27 @@ def task1():
     for start_state in START_STATE_VALUES:
         agent = get_agent(EPSILON, ALPHA)
         env = get_env(start_state)
-        total_rewards, total_steps = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
 
         results[str(start_state)] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
+            "conv_episode": converged_episode,
         }
 
     log_results(results, "start_state", "task1")
 
 
 def task2():
+    if MULTIAGENT:
+        raise ValueError("ERROR!!!")
+
     results = {}
     for actions_no in [4, 8]:
         agent = get_agent(EPSILON, 0.3, actions_no)
         env = get_env(START_STATE)
-        total_rewards, total_steps = main_single_agent_run(agent, env)
+        total_rewards, total_steps, _ = main_single_agent_run(agent, env)
 
         results[actions_no] = {
             "rewards": total_rewards,
@@ -252,6 +276,9 @@ def task2():
 
 
 def task3():
+    if not MULTIAGENT:
+        raise ValueError("ERROR!!!")
+
     agent1 = get_agent(0.3, ALPHA)
     agent2 = get_agent(0.3, ALPHA)
     agent3 = get_agent(0.3, ALPHA)
@@ -264,6 +291,6 @@ def task3():
 
 
 if __name__ == "__main__":
-    # task1()
+    task1()
     # task2()
-    task3()
+    # task3()

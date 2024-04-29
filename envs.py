@@ -163,12 +163,15 @@ class GridA(BaseEnv):
 
 
 class GridB(BaseEnv):
-    def __init__(self, start_state):
-        super().__init__(start_state)
+    def __init__(self, num_agents, start_states):
+        super().__init__(num_agents, start_states)
         self.wind_power = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
 
     def step(self, action):
-        new_y, new_x = ACTION.apply_action(self.act_state, action)
+        if self.num_agents != 1:
+            raise ValueError("Grid B works only for single agent!")
+
+        new_y, new_x = ACTION.apply_action(self.act_states[0], action[0])
 
         valid = True
         if not (0 <= new_y < BaseEnv.HEIGHT):
@@ -178,21 +181,21 @@ class GridB(BaseEnv):
             valid = False
 
         if valid:
-            self.act_state = (new_y, new_x)
+            self.act_states[0] = (new_y, new_x)
 
-        act_y, act_x = self.act_state
+        act_y, act_x = self.act_states[0]
         act_y = max(0, act_y - self.wind_power[act_x])
-        self.act_state = (act_y, act_x)
+        self.act_states[0] = (act_y, act_x)
 
         reward = -1
         done = False
-        if self.board[self.act_state[0], self.act_state[1]] == CELL_TYPE.GOAL.value:
+        if self.board[self.act_states[0][0], self.act_states[0][1]] == CELL_TYPE.GOAL.value:
             reward = 1
             done = True
 
-        return BaseEnv.state_tuple_to_int(self.act_state), reward, done
+        return BaseEnv.state_tuple_to_int(self.act_states[0]), reward, done
 
 
 if __name__ == "__main__":
-    base = BaseEnv((3, 1))
+    base = BaseEnv(1, [(1, 1)])
     base.print_board()

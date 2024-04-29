@@ -1,11 +1,14 @@
 {
       "(0, 2)": {
-            "avg_steps": 18.3835
+            "avg_steps": 18.429,
+            "conv_episode": 25
       },
       "(3, 0)": {
-            "avg_steps": 20.7565
+            "avg_steps": 20.699,
+            "conv_episode": 41
       },
       "(6, 2)": {
-            "avg_steps": 18.591
+            "avg_steps": 18.4975,
+            "conv_episode": 41
       }
 }
