@@ -1,5 +1,6 @@
 import numpy as np
 from enum import Enum
+from copy import deepcopy
 
 
 class CELL_TYPE(Enum):
@@ -56,7 +57,6 @@ class BaseEnv:
     def state_tuple_to_int(state):
         y, x = state
         return y * BaseEnv.WIDTH + x
-
     @staticmethod
     def state_int_to_tuple(state):
         y = state // BaseEnv.WIDTH
@@ -64,12 +64,14 @@ class BaseEnv:
 
         return y, x
 
-    def __init__(self, start_state):
+    def __init__(self, num_agents, start_states):
         self.board = np.zeros((BaseEnv.HEIGHT, BaseEnv.WIDTH))
         self.board[3, 7] = CELL_TYPE.GOAL.value
 
-        self.start_state = start_state
-        self.act_state = start_state
+        self.num_agents = num_agents
+
+        self.start_states = {index : elem for index, elem in enumerate(start_states)}
+        self.act_states = {index : elem for index, elem in enumerate(start_states)}
 
     def step(self, action):
         pass
@@ -78,8 +80,8 @@ class BaseEnv:
         self.board = np.zeros((BaseEnv.HEIGHT, BaseEnv.WIDTH))
         self.board[3, 7] = CELL_TYPE.GOAL.value
 
-        self.act_state = self.start_state
-        return BaseEnv.state_tuple_to_int(self.start_state)
+        self.act_states = deepcopy(self.start_states)
+        return [BaseEnv.state_tuple_to_int(v) for k, v in self.start_states.items()]
 
     def print_board(self):
         for line in self.board:
@@ -89,38 +91,75 @@ class BaseEnv:
 
 
 class GridA(BaseEnv):
-    def __init__(self, start_state):
-        super().__init__(start_state)
+    def __init__(self, num_agents, start_states):
+        super().__init__(num_agents, start_states)
         self.board[1: 5, 5] = CELL_TYPE.OBSTACLE.value
 
     def reset(self):
-        super().reset()
+        ans = super().reset()
         self.board[1: 5, 5] = CELL_TYPE.OBSTACLE.value
-        return BaseEnv.state_tuple_to_int(self.start_state)
+        return ans
 
     def step(self, action):
-        new_y, new_x = ACTION.apply_action(self.act_state, action)
+        if self.num_agents == 1:
+            new_y, new_x = ACTION.apply_action(self.act_states[0], action[0])
 
-        valid = True
-        if not (0 <= new_y < BaseEnv.HEIGHT):
-            valid = False
+            valid = True
+            if not (0 <= new_y < BaseEnv.HEIGHT):
+                valid = False
 
-        if not (0 <= new_x < BaseEnv.WIDTH):
-            valid = False
+            if not (0 <= new_x < BaseEnv.WIDTH):
+                valid = False
 
-        if valid and self.board[new_y, new_x] == CELL_TYPE.OBSTACLE:
-            valid = False
+            if valid and self.board[new_y, new_x] == CELL_TYPE.OBSTACLE.value:
+                valid = False
 
-        if valid:
-            self.act_state = (new_y, new_x)
+            if valid:
+                self.act_states[0] = (new_y, new_x)
 
-        reward = -1
-        done = False
-        if self.board[self.act_state[0], self.act_state[1]] == CELL_TYPE.GOAL.value:
-            reward = 1
-            done = True
+            reward = -1
+            done = False
+            if self.board[self.act_states[0][0], self.act_states[0][1]] == CELL_TYPE.GOAL.value:
+                reward = 1
+                done = True
 
-        return BaseEnv.state_tuple_to_int(self.act_state), reward, done
+            return BaseEnv.state_tuple_to_int(self.act_states[0]), reward, done
+
+        else:
+            on_goal = []
+            for ag_id in range(self.num_agents):
+                new_y, new_x = ACTION.apply_action(self.act_states[ag_id], action[ag_id])
+
+                valid = True
+                if not (0 <= new_y < BaseEnv.HEIGHT):
+                    valid = False
+
+                if not (0 <= new_x < BaseEnv.WIDTH):
+                    valid = False
+
+                if valid and self.board[new_y, new_x] == CELL_TYPE.OBSTACLE.value:
+                    valid = False
+
+                if valid:
+                    self.act_states[ag_id] = (new_y, new_x)
+
+                if self.board[self.act_states[ag_id][0], self.act_states[ag_id][1]] == CELL_TYPE.GOAL.value:
+                    on_goal.append(True)
+                else:
+                    on_goal.append(False)
+
+            agent_states = [BaseEnv.state_tuple_to_int(self.act_states[i]) for i in range(self.num_agents)]
+
+            done = False
+            reward = -1
+            if all(on_goal):
+                done = True
+                reward = 10
+            elif any(on_goal):
+                done = True
+                reward = -0.5
+
+            return agent_states, reward, done
 
 
 class GridB(BaseEnv):

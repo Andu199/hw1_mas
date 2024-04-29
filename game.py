@@ -11,8 +11,8 @@ from agents import QLearningAgent, SarsaAgent, DoubleQLearningAgent
 from envs import GridA, GridB
 
 # Constants
-GRID_WORLD = "grid_b"  # 'grid_a' / 'grid_b'
-AGENT = "sarsa"  # 'qlearning' / 'sarsa' / 'double_qlearning'
+GRID_WORLD = "grid_a"  # 'grid_a' / 'grid_b'
+AGENT = "qlearning"  # 'qlearning' / 'sarsa' / 'double_qlearning'
 
 EPSILON = 0.1
 EPSILON_VALUES = [0.1, 0.5, 0.8]
@@ -25,8 +25,8 @@ START_STATES = None  # to be completed
 ACTIONS_NO = 4
 STATES_NO = 70  # 7 * 10 grid
 
-NO_EPISODES = 2000
-MULTIAGENT = False
+NO_EPISODES = 10000
+MULTIAGENT = True
 
 
 def get_agent(epsilon, alpha, actions_no=ACTIONS_NO):
@@ -40,19 +40,25 @@ def get_agent(epsilon, alpha, actions_no=ACTIONS_NO):
         else:
             raise ValueError("Not yet implemented agent!")
     else:
-        # idk
-        pass
+        if AGENT == "qlearning":
+            return QLearningAgent(epsilon, alpha, actions_no, STATES_NO)
+        elif AGENT == "sarsa":
+            return SarsaAgent(epsilon, alpha, actions_no, STATES_NO)
+        elif AGENT == "double_qlearning":
+            return DoubleQLearningAgent(epsilon, alpha, actions_no, STATES_NO)
+        else:
+            raise ValueError("Not yet implemented agent!")
 
 
 def get_env(start_state):
     if not MULTIAGENT:
         if GRID_WORLD == "grid_a":
-            return GridA(start_state)
+            return GridA(1, [start_state])
         elif GRID_WORLD == "grid_b":
             return GridB(start_state)
     else:
         if GRID_WORLD == "grid_a":
-            return GridA(start_state)
+            return GridA(3, [(0, 2), (3, 0), (6, 2)])
         elif GRID_WORLD == "grid_b":
             return GridB(start_state)
 
@@ -127,19 +133,57 @@ def main_single_agent_run(agent, env):
         total_reward = 0.
         steps = 0
 
-        state = env.reset()
+        state = env.reset()[0]
         agent.new_episode()
         done = False
 
         while not done:
             action = agent.get_action(state)
-            next_state, reward, done = env.step(action)
+            next_state, reward, done = env.step([action])
 
             total_reward += reward
             steps += 1
 
             agent.update_internals(next_state, reward)
             state = next_state
+
+        total_rewards.append(total_reward)
+        total_steps.append(steps)
+
+    return total_rewards, total_steps
+
+
+def main_multi_agent_run(agents, env):
+    total_rewards = []
+    total_steps = []
+    agents_num = len(agents)
+
+    for episode in range(NO_EPISODES):
+        print("EPISODE", episode)
+
+        total_reward = 0.
+        steps = 0
+
+        states = env.reset()
+
+        for ag in agents:
+            ag.new_episode()
+        done = False
+
+        while not done:
+            actions = []
+            for i in range(agents_num):
+                action = agents[i].get_action(states[i])
+                actions.append(action)
+
+            next_states, reward, done = env.step(actions)
+
+            total_reward += reward
+            steps += 1
+
+            for i in range(agents_num):
+                agents[i].update_internals(next_states[i], reward)
+            states = next_states
 
         total_rewards.append(total_reward)
         total_steps.append(steps)
@@ -208,10 +252,18 @@ def task2():
 
 
 def task3():
-    pass
+    agent1 = get_agent(0.3, ALPHA)
+    agent2 = get_agent(0.3, ALPHA)
+    agent3 = get_agent(0.3, ALPHA)
+    env = get_env(START_STATE)
+
+    main_multi_agent_run([agent1, agent2, agent3], env)
+    print(print_q(agent1.q))
+    print(print_q(agent2.q))
+    print(print_q(agent3.q))
 
 
 if __name__ == "__main__":
     # task1()
-    task2()
-    # task3()
+    # task2()
+    task3()
