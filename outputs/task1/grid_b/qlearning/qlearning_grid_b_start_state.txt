@@ -1,14 +1,20 @@
 {
       "(0, 2)": {
-            "avg_steps": 18.429,
-            "conv_episode": 25
+            "avg_steps": 18.565,
+            "conv_episode": 19,
+            "robustness": 0.0,
+            "robustness_train": 23.037963777209132
       },
       "(3, 0)": {
-            "avg_steps": 20.699,
-            "conv_episode": 41
+            "avg_steps": 20.6145,
+            "conv_episode": 40,
+            "robustness": 0.0,
+            "robustness_train": 22.474115994850607
       },
       "(6, 2)": {
-            "avg_steps": 18.4975,
-            "conv_episode": 41
+            "avg_steps": 18.493,
+            "conv_episode": 36,
+            "robustness": 0.0,
+            "robustness_train": 23.85711531178906
       }
 }

@@ -1,11 +1,20 @@
 {
       "0.3": {
-            "avg_steps": 9.672
+            "avg_steps": 14.9765,
+            "conv_episode": 217,
+            "robustness": 0.0,
+            "robustness_train": 14.624532394234011
       },
       "0.6": {
-            "avg_steps": 11.1295
+            "avg_steps": 14.1445,
+            "conv_episode": 178,
+            "robustness": 0.0,
+            "robustness_train": 10.327759667517444
       },
       "0.9": {
-            "avg_steps": 8.95
+            "avg_steps": 15.707,
+            "conv_episode": 86,
+            "robustness": 0.0,
+            "robustness_train": 9.543696925196233
       }
 }

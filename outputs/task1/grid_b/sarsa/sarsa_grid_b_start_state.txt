@@ -1,11 +1,20 @@
 {
       "(0, 2)": {
-            "avg_steps": 46.4975
+            "avg_steps": 43.052,
+            "conv_episode": 59,
+            "robustness": 0.0,
+            "robustness_train": 53.3738446807048
       },
       "(3, 0)": {
-            "avg_steps": 47.16
+            "avg_steps": 49.7445,
+            "conv_episode": 108,
+            "robustness": 0.0,
+            "robustness_train": 58.84871468222563
       },
       "(6, 2)": {
-            "avg_steps": 42.163
+            "avg_steps": 43.6065,
+            "conv_episode": 128,
+            "robustness": 0.0,
+            "robustness_train": 62.61268767390519
       }
 }

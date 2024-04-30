@@ -1,8 +1,14 @@
 {
       "4": {
-            "avg_steps": 23.5525
+            "avg_steps": 23.876,
+            "conv_episode": 178,
+            "robustness": 0.0,
+            "robustness_train": 44.434430614108244
       },
       "8": {
-            "avg_steps": 14.8425
+            "avg_steps": 15.0775,
+            "conv_episode": 88,
+            "robustness": 0.0,
+            "robustness_train": 64.34886552030268
       }
 }

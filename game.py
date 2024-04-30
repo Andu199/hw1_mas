@@ -12,7 +12,7 @@ from envs import GridA, GridB
 
 # Constants
 GRID_WORLD = "grid_b"  # 'grid_a' / 'grid_b'
-AGENT = "qlearning"  # 'qlearning' / 'sarsa' / 'double_qlearning'
+AGENT = "sarsa"  # 'qlearning' / 'sarsa' / 'double_qlearning'
 
 EPSILON = 0.1
 EPSILON_VALUES = [0.1, 0.5, 0.8]
@@ -26,6 +26,7 @@ ACTIONS_NO = 4
 STATES_NO = 70  # 7 * 10 grid
 
 NO_EPISODES = 2000
+TEST_EPISODES = 50
 MULTIAGENT = False
 
 
@@ -74,19 +75,6 @@ def print_q(q):
     return tabulate(df)
 
 
-def log_results_aux(agent, total_rewards):
-    if hasattr(agent, "q"):
-        log = print_q(agent.q)
-    else:
-        log = print_q((agent.q1 + agent.q2) / 2)
-    print(log)
-
-    agent_name = type(agent).__name__.replace("Agent", "")
-    plt.plot(list(range(NO_EPISODES)), total_rewards)
-    plt.title(f"Reward plots for {agent_name}")
-    plt.savefig(f"outputs/{agent_name}_rewards_task1.png")
-
-
 def log_results(results, key_name, task_id):
     plt.figure(figsize=(16, 9))
     agent_name = AGENT.replace("_", " ").capitalize()
@@ -130,12 +118,32 @@ def get_policy(agent):
     return pi
 
 
+def run_test_episodes(pi, env, no_test_episodes):
+    steps_total = []
+    for _ in range(no_test_episodes):
+        state = env.reset()[0]
+        steps = 0
+        done = False
+
+        while not done and steps < 1000:
+            action = pi[state]
+            next_state, reward, done = env.step([action])
+
+            steps += 1
+            state = next_state
+
+        steps_total.append(steps)
+
+    return np.std(steps_total)
+
+
 def main_single_agent_run(agent, env):
     total_rewards = []
     total_steps = []
 
     old_pi = np.zeros(STATES_NO)
     converged_episode = -1
+    robustness = []
 
     for episode in range(NO_EPISODES):
         print("EPISODE", episode)
@@ -165,7 +173,10 @@ def main_single_agent_run(agent, env):
             converged_episode = episode
         old_pi = pi
 
-    return total_rewards, total_steps, converged_episode
+        if (episode + 1) % 500 == 0:
+            robustness.append(run_test_episodes(pi, env, TEST_EPISODES))
+
+    return total_rewards, total_steps, converged_episode, np.mean(robustness)
 
 
 def main_multi_agent_run(agents, env):
@@ -214,13 +225,15 @@ def task1():
     for epsilon in EPSILON_VALUES:
         agent = get_agent(epsilon, ALPHA)
         env = get_env(START_STATE)
-        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode, robustness = main_single_agent_run(agent, env)
 
         results[epsilon] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
             "conv_episode": converged_episode,
+            "robustness": robustness,
+            "robustness_train": np.std(total_steps)
         }
 
     log_results(results, "epsilon", "task1")
@@ -229,13 +242,15 @@ def task1():
     for alpha in ALPHA_VALUES:
         agent = get_agent(EPSILON, alpha)
         env = get_env(START_STATE)
-        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode, robustness = main_single_agent_run(agent, env)
 
         results[alpha] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
             "conv_episode": converged_episode,
+            "robustness": robustness,
+            "robustness_train": np.std(total_steps)
         }
 
     log_results(results, "alpha", "task1")
@@ -244,13 +259,15 @@ def task1():
     for start_state in START_STATE_VALUES:
         agent = get_agent(EPSILON, ALPHA)
         env = get_env(start_state)
-        total_rewards, total_steps, converged_episode = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode, robustness = main_single_agent_run(agent, env)
 
         results[str(start_state)] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
             "conv_episode": converged_episode,
+            "robustness": robustness,
+            "robustness_train": np.std(total_steps)
         }
 
     log_results(results, "start_state", "task1")
@@ -264,12 +281,15 @@ def task2():
     for actions_no in [4, 8]:
         agent = get_agent(EPSILON, 0.3, actions_no)
         env = get_env(START_STATE)
-        total_rewards, total_steps, _ = main_single_agent_run(agent, env)
+        total_rewards, total_steps, converged_episode, robustness = main_single_agent_run(agent, env)
 
         results[actions_no] = {
             "rewards": total_rewards,
             "steps": total_steps,
             "avg_steps": np.mean(total_steps),
+            "conv_episode": converged_episode,
+            "robustness": robustness,
+            "robustness_train": np.std(total_steps)
         }
 
     log_results(results, "no_actions", "task2")
@@ -291,6 +311,6 @@ def task3():
 
 
 if __name__ == "__main__":
-    task1()
+    # task1()
     # task2()
-    # task3()
+    task3()
